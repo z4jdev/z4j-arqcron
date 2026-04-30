@@ -4,41 +4,34 @@
 [![Python](https://img.shields.io/pypi/pyversions/z4j-arqcron.svg)](https://pypi.org/project/z4j-arqcron/)
 [![License](https://img.shields.io/pypi/l/z4j-arqcron.svg)](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)
 
+The arq cron-jobs scheduler adapter for [z4j](https://z4j.com).
 
-Read-only scheduler adapter for arq's `cron_jobs`.
+Surfaces every cron job your arq Settings class registers on
+the dashboard's Schedules page — read, enable, disable, trigger.
 
-```python
-from arq import cron
-from z4j_arq import ArqEngineAdapter
-from z4j_arqcron import ArqCronAdapter
+## Install
 
-cron_jobs = [
-    cron(send_summary, hour=3, minute=0, name="daily_summary"),
-]
-
-# In your z4j-bare bootstrap:
-from z4j_bare import install_agent
-install_agent(
-    engines=[ArqEngineAdapter(...)],
-    schedulers=[ArqCronAdapter(cron_jobs=cron_jobs)],
-)
+```bash
+pip install z4j-arq z4j-arqcron
 ```
 
-arq cron jobs are registered statically in `WorkerSettings.cron_jobs`,
-so this adapter is read-only by design (same constraints as
-`z4j-hueyperiodic`).
+## Pairs with
 
-Apache 2.0.
+- [`z4j-arq`](https://github.com/z4jdev/z4j-arq) — engine adapter
+
+## Documentation
+
+Full docs at [z4j.dev/schedulers/arq-cron/](https://z4j.dev/schedulers/arq-cron/).
 
 ## License
 
-Apache 2.0 - see [LICENSE](LICENSE). This package is deliberately permissively licensed so that proprietary Django / Flask / FastAPI applications can import it without any license concerns.
+Apache-2.0 — see [LICENSE](LICENSE).
 
 ## Links
 
-- Homepage: <https://z4j.com>
-- Documentation: <https://z4j.dev>
-- Source: <https://github.com/z4jdev/z4j-arqcron>
-- Issues: <https://github.com/z4jdev/z4j-arqcron/issues>
+- Homepage: https://z4j.com
+- Documentation: https://z4j.dev
+- PyPI: https://pypi.org/project/z4j-arqcron/
+- Issues: https://github.com/z4jdev/z4j-arqcron/issues
 - Changelog: [CHANGELOG.md](CHANGELOG.md)
-- Security: `security@z4j.com` (see [SECURITY.md](SECURITY.md))
+- Security: security@z4j.com (see [SECURITY.md](SECURITY.md))
