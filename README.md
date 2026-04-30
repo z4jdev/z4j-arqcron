@@ -6,8 +6,22 @@
 
 The arq cron-jobs scheduler adapter for [z4j](https://z4j.com).
 
-Surfaces every cron job your arq Settings class registers on
-the dashboard's Schedules page — read, enable, disable, trigger.
+Surfaces every cron job your arq Settings class registers on the
+dashboard's Schedules page — read, enable, disable, trigger.
+
+## What it ships
+
+| Capability | Notes |
+|---|---|
+| List schedules | every `cron_jobs` entry on your arq Settings |
+| Read | by registered name |
+| Enable / disable | via consumer-side gating |
+| Trigger now | enqueues the task immediately, outside the schedule |
+| Boot inventory | full snapshot at agent connect; existing cron jobs show up without editing |
+
+arq cron jobs are defined declaratively on the WorkerSettings class, so
+create / update / delete are intentionally out of scope — those need a
+deploy round-trip. The dashboard hides buttons it can't honor.
 
 ## Install
 
@@ -15,9 +29,37 @@ the dashboard's Schedules page — read, enable, disable, trigger.
 pip install z4j-arq z4j-arqcron
 ```
 
+```python
+from arq import cron
+from z4j_bare import install_agent
+from z4j_arq import ArqEngineAdapter
+from z4j_arqcron import ArqCronAdapter
+
+class WorkerSettings:
+    redis_settings = ...
+    cron_jobs = [
+        cron(cleanup, minute=set(range(0, 60, 5))),
+    ]
+
+install_agent(
+    engines=[ArqEngineAdapter(settings=WorkerSettings)],
+    schedulers=[ArqCronAdapter(settings=WorkerSettings)],
+    brain_url="https://brain.example.com",
+    token="z4j_agent_...",
+    project_id="my-project",
+)
+```
+
 ## Pairs with
 
 - [`z4j-arq`](https://github.com/z4jdev/z4j-arq) — engine adapter
+
+## Reliability
+
+- No exception from the adapter ever propagates back into arq's worker
+  loop or your job code.
+- The cron-jobs registry is read-only at runtime; the adapter only
+  observes, it does not rewrite WorkerSettings.
 
 ## Documentation
 
