@@ -7,7 +7,7 @@
 The arq cron-jobs scheduler adapter for [z4j](https://z4j.com).
 
 Surfaces every cron job your arq Settings class registers on the
-dashboard's Schedules page — read, enable, disable, trigger.
+dashboard's Schedules page, read, enable, disable, trigger.
 
 ## What it ships
 
@@ -20,7 +20,7 @@ dashboard's Schedules page — read, enable, disable, trigger.
 | Boot inventory | full snapshot at agent connect; existing cron jobs show up without editing |
 
 arq cron jobs are defined declaratively on the WorkerSettings class, so
-create / update / delete are intentionally out of scope — those need a
+create / update / delete are intentionally out of scope, those need a
 deploy round-trip. The dashboard hides buttons it can't honor.
 
 ## Install
@@ -52,7 +52,7 @@ install_agent(
 
 ## Pairs with
 
-- [`z4j-arq`](https://github.com/z4jdev/z4j-arq) — engine adapter
+- [`z4j-arq`](https://github.com/z4jdev/z4j-arq), engine adapter
 
 ## Reliability
 
@@ -67,7 +67,7 @@ Full docs at [z4j.dev/schedulers/arq-cron/](https://z4j.dev/schedulers/arq-cron/
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE).
+Apache-2.0, see [LICENSE](LICENSE).
 
 ## Links
 
