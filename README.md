@@ -1,8 +1,8 @@
 # z4j-arqcron
 
-[![PyPI version](https://img.shields.io/pypi/v/z4j-arqcron.svg)](https://pypi.org/project/z4j-arqcron/)
-[![Python](https://img.shields.io/pypi/pyversions/z4j-arqcron.svg)](https://pypi.org/project/z4j-arqcron/)
-[![License](https://img.shields.io/pypi/l/z4j-arqcron.svg)](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/z4j-arqcron.svg?v=1.4.0)](https://pypi.org/project/z4j-arqcron/)
+[![Python](https://img.shields.io/pypi/pyversions/z4j-arqcron.svg?v=1.4.0)](https://pypi.org/project/z4j-arqcron/)
+[![License](https://img.shields.io/pypi/l/z4j-arqcron.svg?v=1.4.0)](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)
 
 The arq cron-jobs scheduler adapter for [z4j](https://z4j.com).
 
