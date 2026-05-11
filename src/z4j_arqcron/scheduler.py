@@ -19,7 +19,7 @@ from z4j_core.models import CommandResult, Schedule, ScheduleKind
 
 from z4j_arqcron.capabilities import DEFAULT_CAPABILITIES
 
-logger = logging.getLogger("z4j.agent.arqcron.scheduler")
+logger = logging.getLogger("z4j.adapter.arqcron.scheduler")
 
 _NAME = "arq-cron"
 
