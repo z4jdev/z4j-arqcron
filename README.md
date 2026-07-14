@@ -1,18 +1,18 @@
 # z4j-arqcron
 
-[![PyPI version](https://img.shields.io/pypi/v/z4j-arqcron.svg?v=1.6.7)](https://pypi.org/project/z4j-arqcron/)
-[![Python](https://img.shields.io/pypi/pyversions/z4j-arqcron.svg?v=1.6.7)](https://pypi.org/project/z4j-arqcron/)
-[![License](https://img.shields.io/pypi/l/z4j-arqcron.svg?v=1.6.7)](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/z4j-arqcron.svg?v=1.7.0)](https://pypi.org/project/z4j-arqcron/)
+[![Python](https://img.shields.io/pypi/pyversions/z4j-arqcron.svg?v=1.7.0)](https://pypi.org/project/z4j-arqcron/)
+[![License](https://img.shields.io/pypi/l/z4j-arqcron.svg?v=1.7.0)](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)
 
 The arq cron-jobs scheduler adapter for [z4j](https://z4j.com).
 
-Surfaces every cron job your arq Settings class registers on the
-dashboard's Schedules page, read, enable, disable, trigger.
+Surfaces every cron job your arq `WorkerSettings` class registers on the
+dashboard's Schedules page, read-only (list and read).
 
 ## Compatibility
 
 - arq 0.26+ and <1
-- Python 3.10+
+- Python 3.11+
 
 Full per-adapter matrix at <https://z4j.dev/reference/compatibility/>.
 
@@ -20,15 +20,17 @@ Full per-adapter matrix at <https://z4j.dev/reference/compatibility/>.
 
 | Capability | Notes |
 |---|---|
-| List schedules | every `cron_jobs` entry on your arq Settings |
+| List schedules | every `cron_jobs` entry on your arq `WorkerSettings` |
 | Read | by registered name |
-| Enable / disable | via consumer-side gating |
-| Trigger now | enqueues the task immediately, outside the schedule |
 | Boot inventory | full snapshot at agent connect; existing cron jobs show up without editing |
 
-arq cron jobs are defined declaratively on the WorkerSettings class, so
-create / update / delete are intentionally out of scope, those need a
-deploy round-trip. The dashboard hides buttons it can't honor.
+This adapter is read-only by design. arq cron jobs are defined
+declaratively on the `WorkerSettings` class, and arq exposes no runtime
+enable/disable toggle or trigger-now primitive, so create / update /
+delete / enable / disable / trigger now are all out of scope, those need
+a deploy round-trip (or, for a one-off run, enqueue the underlying
+coroutine via `ArqRedis.enqueue_job()`). The dashboard hides buttons it
+can't honor.
 
 ## Install
 
@@ -42,15 +44,24 @@ from z4j_bare import install_agent
 from z4j_arq import ArqEngineAdapter
 from z4j_arqcron import ArqCronAdapter
 
+async def cleanup(ctx):
+    ...
+
 class WorkerSettings:
-    redis_settings = ...
+    redis_settings = ...  # arq.connections.RedisSettings
+    functions = [cleanup]
     cron_jobs = [
         cron(cleanup, minute=set(range(0, 60, 5))),
     ]
 
 install_agent(
-    engines=[ArqEngineAdapter(settings=WorkerSettings)],
-    schedulers=[ArqCronAdapter(settings=WorkerSettings)],
+    engines=[
+        ArqEngineAdapter(
+            redis_settings=WorkerSettings.redis_settings,
+            function_names=["cleanup"],
+        ),
+    ],
+    schedulers=[ArqCronAdapter(cron_jobs=WorkerSettings.cron_jobs)],
     brain_url="https://brain.example.com",
     token="z4j_agent_...",
     project_id="my-project",

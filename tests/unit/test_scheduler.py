@@ -6,9 +6,8 @@ import pytest
 
 pytest.importorskip("arq")
 
-from arq import cron  # noqa: E402
-
-from z4j_arqcron import ArqCronAdapter  # noqa: E402
+from arq import cron
+from z4j_arqcron import ArqCronAdapter
 
 
 async def cleanup_handler(ctx):  # pragma: no cover

@@ -45,7 +45,7 @@ class ArqCronAdapter:
         self._cron_jobs: list[Any] = list(cron_jobs)
         self._project_id = project_id or uuid4()
 
-    def connect_signals(self, sink: Any) -> None:  # noqa: ARG002
+    def connect_signals(self, sink: Any) -> None:
         return
 
     def disconnect_signals(self) -> None:
@@ -56,7 +56,7 @@ class ArqCronAdapter:
         for job in self._cron_jobs:
             try:
                 out.append(self._to_schedule(job))
-            except Exception:  # noqa: BLE001
+            except Exception:
                 logger.exception(
                     "z4j arqcron: failed to map %r",
                     getattr(job, "name", "?"),
@@ -69,39 +69,41 @@ class ArqCronAdapter:
                 return s
         return None
 
-    async def create_schedule(self, spec: Schedule) -> Schedule:  # noqa: ARG002
+    async def create_schedule(self, spec: Schedule) -> Schedule:
         raise NotImplementedError(
             "arq cron jobs are statically configured; edit your "
             "WorkerSettings.cron_jobs and redeploy.",
         )
 
     async def update_schedule(
-        self, schedule_id: str, spec: Schedule,  # noqa: ARG002
+        self,
+        schedule_id: str,
+        spec: Schedule,
     ) -> Schedule:
         raise NotImplementedError(
             "arq cron jobs are statically configured; edit and redeploy.",
         )
 
-    async def delete_schedule(self, schedule_id: str) -> CommandResult:  # noqa: ARG002
+    async def delete_schedule(self, schedule_id: str) -> CommandResult:
         return CommandResult(
             status="failed",
             error="arq cron jobs are statically configured; remove from "
             "WorkerSettings.cron_jobs and redeploy.",
         )
 
-    async def enable_schedule(self, schedule_id: str) -> CommandResult:  # noqa: ARG002
+    async def enable_schedule(self, schedule_id: str) -> CommandResult:
         return CommandResult(
             status="failed",
             error="arq cron jobs have no enable/disable toggle",
         )
 
-    async def disable_schedule(self, schedule_id: str) -> CommandResult:  # noqa: ARG002
+    async def disable_schedule(self, schedule_id: str) -> CommandResult:
         return CommandResult(
             status="failed",
             error="arq cron jobs have no enable/disable toggle",
         )
 
-    async def trigger_now(self, schedule_id: str) -> CommandResult:  # noqa: ARG002
+    async def trigger_now(self, schedule_id: str) -> CommandResult:
         return CommandResult(
             status="failed",
             error=(
