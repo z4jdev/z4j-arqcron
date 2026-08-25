@@ -1,13 +1,13 @@
 # z4j-arqcron
 
-[![PyPI version](https://img.shields.io/pypi/v/z4j-arqcron.svg?v=1.8.0)](https://pypi.org/project/z4j-arqcron/)
-[![Python](https://img.shields.io/pypi/pyversions/z4j-arqcron.svg?v=1.8.0)](https://pypi.org/project/z4j-arqcron/)
-[![License](https://img.shields.io/pypi/l/z4j-arqcron.svg?v=1.8.0)](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/z4j-arqcron.svg)](https://pypi.org/project/z4j-arqcron/)
+[![Python](https://img.shields.io/pypi/pyversions/z4j-arqcron.svg)](https://pypi.org/project/z4j-arqcron/)
+[![License](https://img.shields.io/pypi/l/z4j-arqcron.svg)](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)
 
 The arq cron-jobs scheduler adapter for [z4j](https://z4j.com).
 
-Surfaces every cron job your arq `WorkerSettings` class registers on the
-dashboard's Schedules page, read-only (list and read).
+Surfaces registered cron jobs from your arq `WorkerSettings` class that the
+adapter can map on the dashboard's Schedules page, read-only (list and read).
 
 ## Compatibility
 
@@ -20,7 +20,7 @@ Full per-adapter matrix at <https://z4j.dev/reference/compatibility/>.
 
 | Capability | Notes |
 |---|---|
-| List schedules | every `cron_jobs` entry on your arq `WorkerSettings` |
+| List schedules | registered `cron_jobs` entries that the adapter can map |
 | Read | by registered name |
 | Boot inventory | full snapshot at agent connect; existing cron jobs show up without editing |
 
@@ -39,6 +39,8 @@ pip install z4j-arq z4j-arqcron
 ```
 
 ```python
+import os
+
 from arq import cron
 from z4j_bare import install_agent
 from z4j_arq import ArqEngineAdapter
@@ -65,6 +67,7 @@ install_agent(
     brain_url="https://brain.example.com",
     token="z4j_agent_...",
     project_id="my-project",
+    hmac_secret=os.environ["Z4J_HMAC_SECRET"],
 )
 ```
 
@@ -74,10 +77,9 @@ install_agent(
 
 ## Reliability
 
-- No exception from the adapter ever propagates back into arq's worker
-  loop or your job code.
-- The cron-jobs registry is read-only at runtime; the adapter only
-  observes, it does not rewrite WorkerSettings.
+- The cron-jobs registry is read-only at runtime; inventory reads do not
+  rewrite `WorkerSettings`. A mapping failure aborts the authoritative snapshot
+  so one bad row cannot false-delete a live schedule from the brain mirror.
 
 ## Documentation
 

@@ -58,9 +58,10 @@ class ArqCronAdapter:
                 out.append(self._to_schedule(job))
             except Exception:
                 logger.exception(
-                    "z4j arqcron: failed to map %r",
+                    "z4j arqcron: failed to map %r; skipping this authoritative snapshot",
                     getattr(job, "name", "?"),
                 )
+                raise
         return out
 
     async def get_schedule(self, schedule_id: str) -> Schedule | None:

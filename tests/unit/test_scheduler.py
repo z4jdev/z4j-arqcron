@@ -38,6 +38,23 @@ async def test_lists_cron_jobs(adapter):
 
 
 @pytest.mark.asyncio
+async def test_mapping_failure_aborts_authoritative_snapshot(adapter, monkeypatch):
+    original = adapter._to_schedule
+    calls = 0
+
+    def fail_second(job):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise ValueError("malformed cron job")
+        return original(job)
+
+    monkeypatch.setattr(adapter, "_to_schedule", fail_second)
+    with pytest.raises(ValueError, match="malformed cron job"):
+        await adapter.list_schedules()
+
+
+@pytest.mark.asyncio
 async def test_get_by_name(adapter):
     found = await adapter.get_schedule("nightly_backup")
     assert found is not None

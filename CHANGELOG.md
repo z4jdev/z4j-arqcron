@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.0 (2026-08-25)
+
+* No functional change. Version bumped as part of the coordinated 1.9.0 fleet release, so every package in a deployment agrees on its peers.
+
 ## 1.8.0 (2026-07-23)
 
 * Part of the coordinated 1.8.0 fleet release (unified fleet version, green lint/format/import-boundary gate).
