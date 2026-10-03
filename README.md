@@ -14,7 +14,7 @@ adapter can map on the dashboard's Schedules page, read-only (list and read).
 - arq 0.26+ and <1
 - Python 3.11+
 
-Full per-adapter matrix at <https://z4j.dev/reference/compatibility/>.
+Full per-adapter matrix at <https://docs.z4j.com/reference/compatibility/>.
 
 ## What it ships
 
@@ -83,7 +83,7 @@ install_agent(
 
 ## Documentation
 
-Full docs at [z4j.dev/schedulers/arq-cron/](https://z4j.dev/schedulers/arq-cron/).
+Full docs at [docs.z4j.com/schedulers/arq-cron/](https://docs.z4j.com/schedulers/arq-cron/).
 
 ## License
 
@@ -92,7 +92,7 @@ Apache-2.0, see [LICENSE](LICENSE).
 ## Links
 
 - Homepage: https://z4j.com
-- Documentation: https://z4j.dev
+- Documentation: https://docs.z4j.com
 - PyPI: https://pypi.org/project/z4j-arqcron/
 - Issues: https://github.com/z4jdev/z4j-arqcron/issues
 - Changelog: [CHANGELOG.md](CHANGELOG.md)
