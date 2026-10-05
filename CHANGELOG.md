@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.1 (2026-10-05)
+
+* The requirement is `arq>=0.26` with no upper bound. No code change.
+
 ## 1.12.0 (2026-10-03)
 
 * Carried with the coordinated fleet release. No behaviour changed.

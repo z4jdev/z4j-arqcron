@@ -11,7 +11,7 @@ adapter can map on the dashboard's Schedules page, read-only (list and read).
 
 ## Compatibility
 
-- arq 0.26+ and <1
+- arq 0.26+ (no upper bound)
 - Python 3.11+
 
 Full per-adapter matrix at <https://docs.z4j.com/reference/compatibility/>.
