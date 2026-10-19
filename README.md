@@ -1,99 +1,107 @@
 # z4j-arqcron
 
-[![PyPI version](https://img.shields.io/pypi/v/z4j-arqcron.svg)](https://pypi.org/project/z4j-arqcron/)
-[![Python](https://img.shields.io/pypi/pyversions/z4j-arqcron.svg)](https://pypi.org/project/z4j-arqcron/)
-[![License](https://img.shields.io/pypi/l/z4j-arqcron.svg)](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)
-
-The arq cron-jobs scheduler adapter for [z4j](https://z4j.com).
-
-Surfaces registered cron jobs from your arq `WorkerSettings` class that the
-adapter can map on the dashboard's Schedules page, read-only (list and read).
+The native arq cron adapter for [z4j](https://z4j.com), with dashboard management
+of cron jobs. Dashboard management needs the z4j server, `z4j-core`, `z4j-bare`
+and this adapter from the same release, plus the producer setup below.
 
 ## Compatibility
 
-- arq 0.26+ (no upper bound)
-- Python 3.11+
+arq 0.26+; Python 3.11+.
 
-Full per-adapter matrix at <https://docs.z4j.com/reference/compatibility/>.
+## Installation and producer setup
 
-## What it ships
-
-| Capability | Notes |
-|---|---|
-| List schedules | registered `cron_jobs` entries that the adapter can map |
-| Read | by registered name |
-| Boot inventory | full snapshot at agent connect; existing cron jobs show up without editing |
-
-This adapter is read-only by design. arq cron jobs are defined
-declaratively on the `WorkerSettings` class, and arq exposes no runtime
-enable/disable toggle or trigger-now primitive, so create / update /
-delete / enable / disable / trigger now are all out of scope, those need
-a deploy round-trip (or, for a one-off run, enqueue the underlying
-coroutine via `ArqRedis.enqueue_job()`). The dashboard hides buttons it
-can't honor.
-
-## Install
-
-```bash
-pip install z4j-arq z4j-arqcron
-```
+Install `z4j-arqcron` and `z4j-bare` from the same release wave, plus the native
+scheduler and broker/store dependencies used by your application. The example
+assumes your task code, writable application-state directory and agent credentials
+already exist. Use the project UUID from agent registration.
 
 ```python
+import asyncio
 import os
-
+from datetime import UTC
 from arq import cron
-from z4j_bare import install_agent
-from z4j_arq import ArqEngineAdapter
+from arq.worker import Worker
+from myapp.jobs import cleanup
 from z4j_arqcron import ArqCronAdapter
+from z4j_bare import NativeScheduleControl, install_agent
 
-async def cleanup(ctx):
-    ...
+async def main():
+    worker = Worker(functions=[cleanup], cron_jobs=[cron(cleanup, hour=3)], timezone=UTC)
+    adapter = ArqCronAdapter(
+        worker=worker,
+        control=NativeScheduleControl("/var/lib/myapp/arq-schedules.sqlite3"),
+    )
+    agent = install_agent(
+        engines=[], schedulers=[adapter],
+        brain_url=os.environ["Z4J_BRAIN_URL"], token=os.environ["Z4J_TOKEN"],
+        hmac_secret=os.environ["Z4J_HMAC_SECRET"], project_id=os.environ["Z4J_PROJECT_ID"],
+    )
+    try:
+        await worker.main()
+    finally:
+        agent.stop()
+        await worker.close()
 
-class WorkerSettings:
-    redis_settings = ...  # arq.connections.RedisSettings
-    functions = [cleanup]
-    cron_jobs = [
-        cron(cleanup, minute=set(range(0, 60, 5))),
-    ]
-
-install_agent(
-    engines=[
-        ArqEngineAdapter(
-            redis_settings=WorkerSettings.redis_settings,
-            function_names=["cleanup"],
-        ),
-    ],
-    schedulers=[ArqCronAdapter(cron_jobs=WorkerSettings.cron_jobs)],
-    brain_url="https://brain.example.com",
-    token="z4j_agent_...",
-    project_id="my-project",
-    hmac_secret=os.environ["Z4J_HMAC_SECRET"],
-)
+asyncio.run(main())
 ```
 
-## Pairs with
+Pass the actual running `Worker`, not just `WorkerSettings.cron_jobs`, to enable
+native control. The iterable-only constructor remains an inventory adapter.
+A worker-bound adapter without `control` also permits manual runs.
 
-- [`z4j-arq`](https://github.com/z4jdev/z4j-arq), engine adapter
+## Dashboard controls
 
-## Reliability
+The connected producer supports inventory, create, edit, pause, resume, delete
+and **Run now**. A write is complete only after z4j accepts a snapshot confirming
+the native source. The dashboard uses the current connection's advertised
+capabilities; an unavailable producer cannot accept new edits. Repeating an
+operation ID does not submit it twice. A timeout or uncertain outcome requires
+inspection before submitting a new request.
 
-- The cron-jobs registry is read-only at runtime; inventory reads do not
-  rewrite `WorkerSettings`. A mapping failure aborts the authoritative snapshot
-  so one bad row cannot false-delete a live schedule from the brain mirror.
+A pause prevents future scheduling. Work already queued or running can finish.
+Run now submits an additional execution without resuming a paused schedule.
+Native scheduling keeps the upstream scheduler's timing and delivery semantics;
+it does not acquire z4j-scheduler's catch-up, overlap or exactly-once guarantees.
+Queue task history requires the corresponding engine adapter in the workers.
 
-## Documentation
+## Code definitions and durable overrides
 
-Full docs at [docs.z4j.com/schedulers/arq-cron/](https://docs.z4j.com/schedulers/arq-cron/).
+`NativeScheduleControl` stores dashboard changes in a private SQLite file in
+the producer's application state directory. Keep that file on a durable local
+volume, back it up with the application, and reuse the same path after restart.
+Use a separate file for each application and scheduler owner. Do not put it on
+an ephemeral container filesystem or a network filesystem.
 
-## License
+Code supplies the initial definitions. Each saved change overrides the fields
+it submits: pause and resume submit only the enabled flag, while the dashboard
+edit form submits every editable field (task, schedule type, expression,
+timezone, queue, arguments and enabled flag), so later code changes to those
+fields stay hidden. Removing a code definition removes its projection;
+reintroducing the same source identity restores any saved override. Deletion is
+a durable tombstone, so restarting the application does not recreate it.
+Dashboard-created schedules survive with the same file. No Python files are
+rewritten. New schedules can invoke only tasks already registered in the host
+application; deploying new task code remains an application operation.
 
-Apache-2.0, see [LICENSE](LICENSE).
+The producer reads committed controls locally and keeps scheduling during a
+z4j server outage. If that local state cannot be read or validated, periodic
+dispatch is withheld and the error is logged. Normal task processing continues.
+Install control before starting periodic dispatch. Keep one managed periodic
+producer per application; its dashboard overrides live in that worker's local
+control file. There is currently no separate dashboard action to remove an
+override and restore the code default.
+
+## Supported definitions and limits
+
+- Five cron fields mean minute, hour, day, month, weekday. Six fields prefix seconds. Numeric weekdays use Monday=0 through Sunday=6.
+- Native named weekdays and worker timezone offsets are preserved. New timezone choices use IANA names.
+- Existing cron microseconds, startup behavior, uniqueness and job identity are preserved when editing a definition.
+- The worker's registered functions and cron functions are the allowed tasks. Its configured queue handles the executions.
+- Keyword names beginning with `_` are reserved by arq enqueue options and are rejected for dashboard task arguments.
 
 ## Links
 
-- Homepage: https://z4j.com
-- Documentation: https://docs.z4j.com
-- PyPI: https://pypi.org/project/z4j-arqcron/
-- Issues: https://github.com/z4jdev/z4j-arqcron/issues
-- Changelog: [CHANGELOG.md](CHANGELOG.md)
-- Security: security@z4j.com (see [SECURITY.md](SECURITY.md))
+- [Documentation](https://docs.z4j.com/schedulers/arq-cron/)
+- [Changelog](https://github.com/z4jdev/z4j-arqcron/blob/main/CHANGELOG.md)
+- [Security policy](https://github.com/z4jdev/z4j-arqcron/blob/main/SECURITY.md); report vulnerabilities to security@z4j.com
+- [Apache-2.0 license](https://github.com/z4jdev/z4j-arqcron/blob/main/LICENSE)

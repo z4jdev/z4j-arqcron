@@ -13,7 +13,14 @@ policy, and published advisories are maintained in the
 
 ## Security-critical surface
 
-This read-only adapter inventories the arq `WorkerSettings.cron_jobs` registry
-and sends mapped schedule metadata to the brain. It must not mutate the
-registry or leak values outside that projection. Transport, redaction, and
-authorization policy remain owned by `z4j-core` and the brain.
+This adapter inventories and controls the host application's native scheduler.
+Signed commands are bound to the current producer connection and compare the
+observed definition before mutation. Dashboard task choices must resolve to
+registered application tasks; control must never import arbitrary operator input.
+Native state changes, task arguments, manual dispatch and source-confirmed
+receipts are package-specific security surfaces. Transport, redaction and
+project authorization remain owned by `z4j-core`, `z4j-bare` and the brain.
+
+Durable override files contain schedule arguments and must remain private to the
+application account. A read failure withholds periodic dispatch. The adapter
+does not rewrite Python code or reset saved pauses when the server disconnects.

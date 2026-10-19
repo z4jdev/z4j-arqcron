@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.13.0 (2026-10-19)
+
+- Add durable dashboard CRUD and pause/resume on the actual arq Worker while preserving native timing and queued arguments.
+
 ## 1.12.1 (2026-10-05)
 
 * The requirement is `arq>=0.26` with no upper bound. No code change.
